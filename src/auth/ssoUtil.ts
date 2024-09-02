@@ -7,16 +7,20 @@ export const googleAuth = (endpoint = authEndpoint) => {
   return new Promise((resolve, reject) => {
     const operation = 'Google Auth'
 
-    const width = 480
-    const height = 600
-    const left = (screen.width / 2) - (width / 2)
-    const top = (screen.height / 2) - (height / 2)
+    const maxWidth = 480;
+    const maxHeight = 600;
+    const width = Math.min(screen.width, maxWidth);
+    const height = Math.min(screen.height, maxHeight);
+    const left = (screen.width / 2) - (width / 2);
+    const top = (screen.height / 2) - (height / 2);
 
     const popup = window.open(
       `${endpoint}/googleAuth`,
       '_blank',
       `width=${width},height=${height},left=${left},top=${top}`
     )
+
+    const popupLocation = popup?.location.href
 
     if (!popup) {
       reject(new AppError({
@@ -98,8 +102,8 @@ export const googleAuth = (endpoint = authEndpoint) => {
     checkPopupId = setInterval(checkPopupState, checkPopupInterval)
 
     // handle server response
-    const handleMessage = (event: MessageEvent) => {
-      if (!endpoint.includes(event.origin)) {
+    const handleMessage = async (event: MessageEvent) => {
+      if (popupLocation !== 'about:blank' && !endpoint.includes(event.origin)) {
         cleanup()
         reject(new DevError({
           operation,
@@ -109,7 +113,7 @@ export const googleAuth = (endpoint = authEndpoint) => {
       }
 
       try {
-        const data = JSON.parse(event.data)
+        const data = await JSON.parse(event.data)
 
         if (data.type === 'AUTH_RESULT') {
           cleanup()
@@ -135,7 +139,7 @@ export const googleAuth = (endpoint = authEndpoint) => {
         cleanup()
         reject(new DevError({
           operation,
-          errorMessage: `Error processing message: ${error instanceof Error ? error.message : String(error)}`,
+          errorMessage: error instanceof Error ? error.message : `Error processing message: ${ String(error) }`,
         }))
       }
     }

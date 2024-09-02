@@ -28,7 +28,7 @@ export const useErrorStore = create<ErrorState>((set) => ({
       errorPath: path
     })
 
-     if ([ErrorType.SERVER_ERROR, ErrorType.USER_ERROR].includes(type)) {
+     if ([ErrorType.SERVER_ERROR, ErrorType.USER_ERROR, ErrorType.NO_LOG].includes(type)) {
       useFeedbackStore.getState().showFeedback(message as string, 'error')
      }
   },

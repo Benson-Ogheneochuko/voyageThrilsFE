@@ -1,21 +1,21 @@
 import { useErrorStore } from "./ErrorStore"
-import { ErrorCode, ErrorType } from "./ErrorTypes"
+import { CoverageErrorMessages, ErrorCode, ErrorType } from "./ErrorTypes"
 
 interface IAppError  {
   operation: string
-  statusCode: number
-  errorType: ErrorType
+  userMessage : string
+  statusCode?: number
+  errorType?: ErrorType
   errorMessage? : string
-  userMessage? : string
 }
 
 export class AppError extends Error implements IAppError {
   operation: string
   statusCode: number
   errorType: ErrorType
-  userMessage?: string
+  userMessage: string
 
-  constructor({operation, errorMessage, errorType = ErrorType.USER_ERROR, userMessage, statusCode = 500}: IAppError) {
+  constructor({operation, errorMessage, errorType = ErrorType.USER_ERROR, userMessage, statusCode = ErrorCode.USER_ERROR}: IAppError) {
     super(errorMessage)
     this.name = this.constructor.name
     this.operation = operation
@@ -54,9 +54,13 @@ export const handleError = (error: unknown) => {
     const errorMessage = error instanceof Error ? error.message : String(error)
     const stackTrace = error instanceof Error ? error.stack : 'No stack trace available'
 
+    if (Object.keys(CoverageErrorMessages).includes(errorMessage)) {
+      return useErrorStore.getState().setError(ErrorType.NO_LOG, ErrorCode.NO_LOG, CoverageErrorMessages[errorMessage])
+    }
+
     console.log(`Unexpected error: ${errorMessage}`)
     console.error(`Unexpected error: ${errorMessage} \n Stack: ${stackTrace}`)
-    return useErrorStore.getState().setError(ErrorType.SERVER_ERROR, 500, 'An unexpected error occurred')
+    return useErrorStore.getState().setError(ErrorType.SERVER_ERROR, ErrorCode.SERVER_ERROR, 'An unexpected error occurred')
   }
 }
 
